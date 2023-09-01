@@ -13,14 +13,18 @@
  * within a page table are directly modified.  Thus, the following
  * hook is made available.
  */
-#define set_pte(pteptr, pteval) (*(pteptr) = pteval)
-#define set_pte_atomic(pteptr, pteval) set_pte(pteptr,pteval)
-#define set_pmd(pmdptr, pmdval) (*(pmdptr) = (pmdval))
+#define set_pte(pteptr, pteval) (*(pteptr) = pteval)		// 向页表中写入一个指定的值
+#define set_pte_atomic(pteptr, pteval) set_pte(pteptr,pteval)	// 与set_pte作用相同，但是当PAE开启时，他同时能保证64的值被原子的写入
+#define set_pmd(pmdptr, pmdval) (*(pmdptr) = (pmdval))		// 向页中间目录表中写入一个指定的值
 
-#define ptep_get_and_clear(xp)	__pte(xchg(&(xp)->pte_low, 0))
+#define ptep_get_and_clear(xp)	__pte(xchg(&(xp)->pte_low, 0))		// 清楚一个页表项并返回前一个值
+/**
+ * 如果a和b两个页表项指向同一页并且指定相同的访问优先级，
+ * 那么pte_same返回1，否则返回0
+*/
 #define pte_same(a, b)		((a).pte_low == (b).pte_low)
 #define pte_page(x)		pfn_to_page(pte_pfn(x))
-#define pte_none(x)		(!(x).pte_low)
+#define pte_none(x)		(!(x).pte_low)					// 如果pte的表项值为0，返回1，否则返回0
 #define pte_pfn(x)		((unsigned long)(((x).pte_low >> PAGE_SHIFT)))
 #define pfn_pte(pfn, prot)	__pte(((pfn) << PAGE_SHIFT) | pgprot_val(prot))
 #define pfn_pmd(pfn, prot)	__pmd(((pfn) << PAGE_SHIFT) | pgprot_val(prot))

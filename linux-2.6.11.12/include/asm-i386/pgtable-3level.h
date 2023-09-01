@@ -17,6 +17,9 @@
 #define pgd_ERROR(e) \
 	printk("%s:%d: bad pgd %p(%016Lx).\n", __FILE__, __LINE__, &(e), pgd_val(e))
 
+/**
+ * 如果表项值为0，返回1，否则返回0。因为i386没有页上级页目录表。
+*/
 #define pud_none(pud)				0
 #define pud_bad(pud)				0
 #define pud_present(pud)			1
@@ -58,11 +61,11 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
 }
 #define __HAVE_ARCH_SET_PTE_ATOMIC
 #define set_pte_atomic(pteptr,pteval) \
-		set_64bit((unsigned long long *)(pteptr),pte_val(pteval))
+		set_64bit((unsigned long long *)(pteptr),pte_val(pteval))	// 与set_pte作用相同，但是当PAE开启时，他同时能保证64的值被原子的写入
 #define set_pmd(pmdptr,pmdval) \
-		set_64bit((unsigned long long *)(pmdptr),pmd_val(pmdval))
+		set_64bit((unsigned long long *)(pmdptr),pmd_val(pmdval))	// 向页中间目录表里写入一个指定的值
 #define set_pud(pudptr,pudval) \
-		set_64bit((unsigned long long *)(pudptr),pud_val(pudval))
+		set_64bit((unsigned long long *)(pudptr),pud_val(pudval))	// 向页上级目录表里写入一个指定的值
 
 /*
  * Pentium-II erratum A13: in PAE mode we explicitly have to flush

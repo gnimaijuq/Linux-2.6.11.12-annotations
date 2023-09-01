@@ -48,15 +48,39 @@ void paging_init(void);
  * implements both the traditional 2-level x86 page tables and the
  * newer 3-level PAE-mode page tables.
  */
+/**
+ * 当PAE被禁用时，PMD_SHIFT产生的值为22（来自Offset的12位加上来自Table的10位）
+ * PMD_SIZE产生的值为2^22或4MB，PMD_MASK产生的值为0xffc00000
+ * 当PAE被激活时，PMD_SHIFT产生的值为21（来自Offset的12位加上来自Table的9位）
+ * PMD_SIZE产生的值为2^21或2MB，PMD_MASK产生的值为0xffe00000
+*/
 #ifdef CONFIG_X86_PAE
 # include <asm/pgtable-3level-defs.h>
+/**
+ * 用于计算由页中间目录的一个单独表项所映射的区域大小（即一个页表能表示的虚拟地址的大小）
+*/
 # define PMD_SIZE	(1UL << PMD_SHIFT)
+/**
+ * 用于屏蔽Offset字段与Table字段的所有位
+*/
 # define PMD_MASK	(~(PMD_SIZE-1))
 #else
 # include <asm/pgtable-2level-defs.h>
 #endif
 
+/**
+ * 当PAE被禁止时，PGDIR_SHIFT产生的值为22(与PMD_SHIFT和PUD_SHIFT产生的值相同)，
+ * PGDIR_SIZE产生的值为2^22或4MB，以及PGDIR_MASK产生的值为0xffc00000
+ * 当PAE被激活时，PGDIR_SHIFT产生的值为30(12位Offset加9位Table再加9位Middle Dir)，
+ * PGDIR_SIZE产生的值为2^30或1GB以及PGDIR_MASK产生的值为0xc0000000
+*/
+/**
+ * 用于计算页全局目录中一个单独表项所能映射区域的大小
+*/
 #define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
+/**
+ * 用于屏蔽Offset，table，Middle Dir，Upper Dir字段的所有位
+*/
 #define PGDIR_MASK	(~(PGDIR_SIZE-1))
 
 #define USER_PTRS_PER_PGD	(TASK_SIZE/PGDIR_SIZE)
@@ -90,7 +114,7 @@ void paging_init(void);
  * of the Pentium details, but assuming intel did the straightforward
  * thing, this bit set in the page directory entry just means that
  * the page directory entry points directly to a 4MB-aligned block of
- * memory. 
+ * memory.
  */
 #define _PAGE_BIT_PRESENT	0
 #define _PAGE_BIT_RW		1
@@ -201,11 +225,11 @@ extern unsigned long long __PAGE_KERNEL, __PAGE_KERNEL_EXEC;
 extern unsigned long pg0[];
 
 #define pte_present(x)	((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
-#define pte_clear(xp)	do { set_pte(xp, __pte(0)); } while (0)
+#define pte_clear(xp)	do { set_pte(xp, __pte(0)); } while (0)		// 清除页表的一个表项
 
-#define pmd_none(x)	(!pmd_val(x))
+#define pmd_none(x)	(!pmd_val(x))				// 如果pmd的表项值为0，那么产生的值为1，否则为0
 #define pmd_present(x)	(pmd_val(x) & _PAGE_PRESENT)
-#define pmd_clear(xp)	do { set_pmd(xp, __pmd(0)); } while (0)
+#define pmd_clear(xp)	do { set_pmd(xp, __pmd(0)); } while (0)		// 清除页中间目录表的一个表项
 #define	pmd_bad(x)	((pmd_val(x) & (~PAGE_MASK & ~_PAGE_USER)) != _KERNPG_TABLE)
 
 

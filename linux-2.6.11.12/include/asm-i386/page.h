@@ -2,11 +2,31 @@
 #define _I386_PAGE_H
 
 /* PAGE_SHIFT determines the page size */
+/**
+ * 指定Offset字段的位数
+ * 当用于80x86处理器时，它产生的值是12。由于页内所有地址都必须能放到Offset字段中，
+ * 因此80x86系统的页的大小是2^12=4096字节。PAGE_SHIFT的值为12可以看作是以2为底的
+ * 页大小的对数
+*/
 #define PAGE_SHIFT	12
+/**
+ * 页的大小
+ * PAGE_SHIFT由PAGE_SIZE使用，计算出页的大小
+*/
 #define PAGE_SIZE	(1UL << PAGE_SHIFT)
+/**
+ * 屏蔽Offset的所有位
+ * PAGE_MASH产生的值为0xfffff000
+*/
 #define PAGE_MASK	(~(PAGE_SIZE-1))
 
+/**
+ * 在大型页地址中用于屏蔽Offset字段和Table字段的所有位，其值等于PMD_MASK
+*/
 #define LARGE_PAGE_MASK (~(LARGE_PAGE_SIZE-1))
+/**
+ * 大型页不使用最后一级页表，所以产生大型页尺寸的LARGE_PAGE_SIZE宏等于PMD_SIZE
+*/
 #define LARGE_PAGE_SIZE (1UL << PMD_SHIFT)
 
 #ifdef __KERNEL__
@@ -27,7 +47,7 @@
  *	On older X86 processors it's not a win to use MMX here it seems.
  *	Maybe the K6-III ?
  */
- 
+
 #define clear_page(page)	memset((void *)(page), 0, PAGE_SIZE)
 #define copy_page(to,from)	memcpy((void *)(to), (void *)(from), PAGE_SIZE)
 
@@ -43,22 +63,26 @@
  * These are used to make use of C type-checking..
  */
 extern int nx_enabled;
+/**
+ * 当PAE被激活时，pte_t,pmd_t,pgd_t,pgprot_t都是64位的
+ * 当PAE被禁止时，它们都是32位的
+*/
 #ifdef CONFIG_X86_PAE
 extern unsigned long long __supported_pte_mask;
-typedef struct { unsigned long pte_low, pte_high; } pte_t;
-typedef struct { unsigned long long pmd; } pmd_t;
-typedef struct { unsigned long long pgd; } pgd_t;
-typedef struct { unsigned long long pgprot; } pgprot_t;
-#define pmd_val(x)	((x).pmd)
-#define pte_val(x)	((x).pte_low | ((unsigned long long)(x).pte_high << 32))
-#define __pmd(x) ((pmd_t) { (x) } )
+typedef struct { unsigned long pte_low, pte_high; } pte_t;	// 页表项
+typedef struct { unsigned long long pmd; } pmd_t;			// 页中间目录项
+typedef struct { unsigned long long pgd; } pgd_t;			// 页全局目录项
+typedef struct { unsigned long long pgprot; } pgprot_t;		// 它表示与一个单独表项相关的保护标志
+#define pmd_val(x)	((x).pmd)				// 把一个pmd_t结构类型变量转换成一个无符号整数
+#define pte_val(x)	((x).pte_low | ((unsigned long long)(x).pte_high << 32))	// 把一个pte_t结构类型的变量转换成一个无符号整数
+#define __pmd(x) ((pmd_t) { (x) } )			// 把一个无符号整数转换成pmd_t结构类型变量
 #define HPAGE_SHIFT	21
 #else
-typedef struct { unsigned long pte_low; } pte_t;
-typedef struct { unsigned long pgd; } pgd_t;
-typedef struct { unsigned long pgprot; } pgprot_t;
+typedef struct { unsigned long pte_low; } pte_t;			// 页表项
+typedef struct { unsigned long pgd; } pgd_t;				// 页全局目录项
+typedef struct { unsigned long pgprot; } pgprot_t;			// 它表示与一个单独表项相关的保护标志
 #define boot_pte_t pte_t /* or would you rather have a typedef */
-#define pte_val(x)	((x).pte_low)
+#define pte_val(x)	((x).pte_low)	// 把一个pte_t结构类型变量转换成一个无符号整数
 #define HPAGE_SHIFT	22
 #endif
 #define PTE_MASK	PAGE_MASK
@@ -70,12 +94,12 @@ typedef struct { unsigned long pgprot; } pgprot_t;
 #define HAVE_ARCH_HUGETLB_UNMAPPED_AREA
 #endif
 
-#define pgd_val(x)	((x).pgd)
-#define pgprot_val(x)	((x).pgprot)
+#define pgd_val(x)	((x).pgd)			// 把一个pgd_t结构类型变量转换成一个无符号整数
+#define pgprot_val(x)	((x).pgprot)	// 把一个pgprot_t结构类型变量转换成一个无符号整数
 
-#define __pte(x) ((pte_t) { (x) } )
-#define __pgd(x) ((pgd_t) { (x) } )
-#define __pgprot(x)	((pgprot_t) { (x) } )
+#define __pte(x) ((pte_t) { (x) } )			// 把一个无符号整数转换成pte_t结构类型变量
+#define __pgd(x) ((pgd_t) { (x) } )			// 把一个无符号整数转换成pgd_t结构类型变量
+#define __pgprot(x)	((pgprot_t) { (x) } )	// 把一个无符号整数转换成pgprot_t结构类型变量
 
 #endif /* !__ASSEMBLY__ */
 
@@ -89,7 +113,7 @@ typedef struct { unsigned long pgprot; } pgprot_t;
  *
  * A __PAGE_OFFSET of 0xC0000000 means that the kernel has
  * a virtual address space of one gigabyte, which limits the
- * amount of physical memory you can use to about 950MB. 
+ * amount of physical memory you can use to about 950MB.
  *
  * If you want more physical memory than this then see the CONFIG_HIGHMEM4G
  * and CONFIG_HIGHMEM64G options in the kernel configuration.

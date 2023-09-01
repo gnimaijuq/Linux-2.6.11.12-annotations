@@ -42,6 +42,9 @@ extern unsigned long empty_zero_page[PAGE_SIZE/sizeof(unsigned long)];
 /*
  * 3rd level page
  */
+/**
+ * 确定页上级目录项能映射的区域大小的对数。
+*/
 #define PUD_SHIFT	30
 #define PTRS_PER_PUD	512
 
@@ -72,12 +75,12 @@ extern unsigned long empty_zero_page[PAGE_SIZE/sizeof(unsigned long)];
 static inline void set_pte(pte_t *dst, pte_t val)
 {
 	pte_val(*dst) = pte_val(val);
-} 
+}
 
 static inline void set_pmd(pmd_t *dst, pmd_t val)
 {
-        pmd_val(*dst) = pmd_val(val); 
-} 
+        pmd_val(*dst) = pmd_val(val);
+}
 
 static inline void set_pud(pud_t *dst, pud_t val)
 {
@@ -91,8 +94,8 @@ extern inline void pud_clear (pud_t *pud)
 
 static inline void set_pgd(pgd_t *dst, pgd_t val)
 {
-	pgd_val(*dst) = pgd_val(val); 
-} 
+	pgd_val(*dst) = pgd_val(val);
+}
 
 extern inline void pgd_clear (pgd_t * pgd)
 {
@@ -107,9 +110,21 @@ extern inline void pgd_clear (pgd_t * pgd)
 
 #define PMD_SIZE	(1UL << PMD_SHIFT)
 #define PMD_MASK	(~(PMD_SIZE-1))
+/**
+ * 用于计算页全局目录中的一个单独表项所能映射的区域大小
+*/
 #define PUD_SIZE	(1UL << PUD_SHIFT)
+/**
+ * 用于屏蔽Offset字段，Table字段，Middle Dir字段的所有位
+*/
 #define PUD_MASK	(~(PUD_SIZE-1))
+/**
+ * 用于计算页全局目录中一个单独表项所能映射区域的大小
+*/
 #define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
+/**
+ * 用于屏蔽Offset，Table，Middle Dir及Upper Dir字段的所有位
+*/
 #define PGDIR_MASK	(~(PGDIR_SIZE-1))
 
 #define USER_PTRS_PER_PGD	(TASK_SIZE/PGDIR_SIZE)
@@ -206,13 +221,13 @@ extern inline void pgd_clear (pgd_t * pgd)
 #define __S110	PAGE_SHARED_EXEC
 #define __S111	PAGE_SHARED_EXEC
 
-static inline unsigned long pgd_bad(pgd_t pgd) 
-{ 
+static inline unsigned long pgd_bad(pgd_t pgd)
+{
        unsigned long val = pgd_val(pgd);
-       val &= ~PTE_MASK; 
-       val &= ~(_PAGE_USER | _PAGE_DIRTY); 
-       return val & ~(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED);      
-} 
+       val &= ~PTE_MASK;
+       val &= ~(_PAGE_USER | _PAGE_DIRTY);
+       return val & ~(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED);
+}
 
 static inline unsigned long pud_bad(pud_t pud)
 {
@@ -285,10 +300,10 @@ static inline void ptep_mkdirty(pte_t *ptep)			{ set_bit(_PAGE_BIT_DIRTY, ptep);
  */
 #define pgprot_noncached(prot)	(__pgprot(pgprot_val(prot) | _PAGE_PCD | _PAGE_PWT))
 
-#define __LARGE_PTE (_PAGE_PSE|_PAGE_PRESENT) 
-static inline int pmd_large(pmd_t pte) { 
-	return (pmd_val(pte) & __LARGE_PTE) == __LARGE_PTE; 
-} 	
+#define __LARGE_PTE (_PAGE_PSE|_PAGE_PRESENT)
+static inline int pmd_large(pmd_t pte) {
+	return (pmd_val(pte) & __LARGE_PTE) == __LARGE_PTE;
+}
 
 
 /*
@@ -316,9 +331,9 @@ static inline int pmd_large(pmd_t pte) {
 #define pud_present(pud) (pud_val(pud) & _PAGE_PRESENT)
 
 static inline pud_t *__pud_offset_k(pud_t *pud, unsigned long address)
-{ 
+{
 	return pud + pud_index(address);
-} 
+}
 
 /* PMD  - Level 2 access */
 #define pmd_page_kernel(pmd) ((unsigned long) __va(pmd_val(pmd) & PTE_MASK))
@@ -343,22 +358,22 @@ static inline pud_t *__pud_offset_k(pud_t *pud, unsigned long address)
 /* page, protection -> pte */
 #define mk_pte(page, pgprot)	pfn_pte(page_to_pfn(page), (pgprot))
 #define mk_pte_huge(entry) (pte_val(entry) |= _PAGE_PRESENT | _PAGE_PSE)
- 
+
 /* physical address -> PTE */
 static inline pte_t mk_pte_phys(unsigned long physpage, pgprot_t pgprot)
-{ 
+{
 	pte_t pte;
-	pte_val(pte) = physpage | pgprot_val(pgprot); 
-	return pte; 
+	pte_val(pte) = physpage | pgprot_val(pgprot);
+	return pte;
 }
- 
+
 /* Change flags of a PTE */
 extern inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
-{ 
+{
 	pte_val(pte) &= _PAGE_CHG_MASK;
 	pte_val(pte) |= pgprot_val(newprot);
 	pte_val(pte) &= __supported_pte_mask;
-       return pte; 
+       return pte;
 }
 
 #define pte_index(address) \
@@ -370,7 +385,7 @@ extern inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 #define pte_offset_map(dir,address) pte_offset_kernel(dir,address)
 #define pte_offset_map_nested(dir,address) pte_offset_kernel(dir,address)
 #define pte_unmap(pte) /* NOP */
-#define pte_unmap_nested(pte) /* NOP */ 
+#define pte_unmap_nested(pte) /* NOP */
 
 #define update_mmu_cache(vma,address,pte) do { } while (0)
 
@@ -397,7 +412,7 @@ extern inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 
 #endif /* !__ASSEMBLY__ */
 
-extern int kern_addr_valid(unsigned long addr); 
+extern int kern_addr_valid(unsigned long addr);
 
 #define io_remap_page_range(vma, vaddr, paddr, size, prot)		\
 		remap_pfn_range(vma, vaddr, (paddr) >> PAGE_SHIFT, size, prot)

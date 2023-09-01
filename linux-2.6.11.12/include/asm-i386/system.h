@@ -193,6 +193,12 @@ static inline void __set_64bit_var (unsigned long long *ptr,
 	__set_64bit(ptr,ll_low(value), ll_high(value));
 }
 
+/**
+ * __builtin_constant_p 是编译器gcc内置函数，
+ * 用于判断一个值是否为编译时常量，如果是常数，
+ * 函数返回1 ，否则返回0。此内置函数的典型用法
+ * 是在宏中用于手动编译时优化。
+*/
 #define set_64bit(ptr,value) \
 (__builtin_constant_p(value) ? \
  __set_64bit_constant(ptr, value) : \
@@ -273,27 +279,27 @@ static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
 #define cmpxchg(ptr,o,n)\
 	((__typeof__(*(ptr)))__cmpxchg((ptr),(unsigned long)(o),\
 					(unsigned long)(n),sizeof(*(ptr))))
-    
+
 #ifdef __KERNEL__
-struct alt_instr { 
+struct alt_instr {
 	__u8 *instr; 		/* original instruction */
 	__u8 *replacement;
 	__u8  cpuid;		/* cpuid bit set for replacement */
 	__u8  instrlen;		/* length of original instruction */
-	__u8  replacementlen; 	/* length of new instruction, <= instrlen */ 
+	__u8  replacementlen; 	/* length of new instruction, <= instrlen */
 	__u8  pad;
-}; 
+};
 #endif
 
-/* 
+/*
  * Alternative instructions for different CPU types or capabilities.
- * 
+ *
  * This allows to use optimized instructions even on generic binary
  * kernels.
- * 
+ *
  * length of oldinstr must be longer or equal the length of newinstr
  * It can be padded with nops as needed.
- * 
+ *
  * For non barrier like inlines please define new variants
  * without volatile and memory clobber.
  */
@@ -309,16 +315,16 @@ struct alt_instr {
 		      ".previous\n"						\
 		      ".section .altinstr_replacement,\"ax\"\n"			\
 		      "663:\n\t" newinstr "\n664:\n"   /* replacement */    \
-		      ".previous" :: "i" (feature) : "memory")  
+		      ".previous" :: "i" (feature) : "memory")
 
 /*
  * Alternative inline assembly with input.
- * 
+ *
  * Pecularities:
- * No memory clobber here. 
+ * No memory clobber here.
  * Argument numbers start with 1.
  * Best is to use constraints that are fixed size (like (%1) ... "r")
- * If you use variable sized constraints like "m" or "g" in the 
+ * If you use variable sized constraints like "m" or "g" in the
  * replacement maake sure to pad to the worst case length.
  */
 #define alternative_input(oldinstr, newinstr, feature, input...)		\
@@ -352,11 +358,11 @@ struct alt_instr {
  * Some non intel clones support out of order store. wmb() ceases to be a
  * nop for these.
  */
- 
 
-/* 
- * Actually only lfence would be needed for mb() because all stores done 
- * by the kernel should be already ordered. But keep a full barrier for now. 
+
+/*
+ * Actually only lfence would be needed for mb() because all stores done
+ * by the kernel should be already ordered. But keep a full barrier for now.
  */
 
 #define mb() alternative("lock; addl $0,0(%%esp)", "mfence", X86_FEATURE_XMM2)
@@ -417,7 +423,7 @@ struct alt_instr {
 #define read_barrier_depends()	do { } while(0)
 
 #ifdef CONFIG_X86_OOSTORE
-/* Actually there are no OOO store capable CPUs for now that do SSE, 
+/* Actually there are no OOO store capable CPUs for now that do SSE,
    but make it already an possibility. */
 #define wmb() alternative("lock; addl $0,0(%%esp)", "sfence", X86_FEATURE_XMM)
 #else
